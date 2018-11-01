@@ -7,6 +7,14 @@ const UserSchema = new Schema({
         type: String,
         required: true
     },
+    accessToken: {
+        type: String,
+        required: true
+    },
+    refreshToken: {
+        type: String,
+        required: true
+    },
     date: {
         type: Date,
         default: Date.now

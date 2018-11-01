@@ -1,0 +1,93 @@
+const express = require('express');
+const router = express.Router();
+const passport = require('passport');
+const SpotifyStrategy = require('passport-spotify').Strategy;
+
+const clientId = require('../../config/keys').clientId;
+const clientSecret = require('../../config/keys').clientSecret;
+
+// Load user model
+const User = require('../../models/User');
+
+passport.use(
+    new SpotifyStrategy(
+        {
+            clientID: clientId,
+            clientSecret: clientSecret,
+            callbackURL: 'http://localhost:5050/api/auth/callback/'
+        },
+        function(accessToken, refreshToken, expires_in, profile, done) {
+            User.findOne({ spotifyId: profile.id }).then(user => {
+                if (user) {
+                    User.findOneAndUpdate(
+                        { spotifyId: profile.id },
+                        {
+                            $set: {
+                                accessToken: accessToken,
+                                refreshToken: refreshToken
+                            }
+                        },
+                        { new: true }
+                    )
+                        .then(user => done(null, user))
+                        .catch(err => console.log(err));
+                } else {
+                    const newUser = new User({
+                        spotifyId: profile.id,
+                        accessToken,
+                        refreshToken
+                    });
+
+                    newUser
+                        .save()
+                        .then(() => done(null, newUser))
+                        .catch(err => console.log(err));
+                }
+            });
+        }
+    )
+);
+
+router.get(
+    '/spotify',
+    passport.authenticate(
+        'spotify',
+        { session: false },
+        {
+            scope: [
+                'user-library-read',
+                'user-library-modify',
+                'user-read-email',
+                'streaming',
+                'user-read-birthdate',
+                'user-read-private'
+            ],
+            showDialog: true
+        }
+    ),
+    function(req, res) {
+        // The request will be redirected to spotify for authentication, so this
+        // function will not be called.
+    }
+);
+
+router.get(
+    '/callback',
+    passport.authenticate('spotify', {
+        failureRedirect: '/login',
+        session: false
+    }),
+    function(req, res) {
+        // Successful authentication, redirect home.
+        res.redirect('/');
+    }
+);
+
+router.get('/test', (req, res) => res.json({ msg: 'auth works' }));
+
+// @route GET api/auth
+// @description Get spotify token
+// @access Public
+router.get('/');
+
+module.exports = router;

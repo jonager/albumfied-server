@@ -1,21 +1,22 @@
 {
-    "name": "albumfied-server",
-    "version": "1.0.0",
-    "description": "",
-    "main": "index.js",
-    "scripts": {
-        "start": "node server.js",
-        "server": "nodemon server.js"
-    },
-    "author": "jonager",
-    "license": "ISC",
-    "dependencies": {
-        "body-parser": "^1.18.3",
-        "express": "^4.16.4",
-        "mongoose": "^5.3.8",
-        "passport-spotify": "^1.0.1"
-    },
-    "devDependencies": {
-        "nodemon": "^1.18.5"
-    }
+  "name": "albumfied-server",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node server.js",
+    "server": "nodemon server.js"
+  },
+  "author": "jonager",
+  "license": "ISC",
+  "dependencies": {
+    "body-parser": "^1.18.3",
+    "express": "^4.16.4",
+    "mongoose": "^5.3.8",
+    "passport": "^0.4.0",
+    "passport-spotify": "^1.0.1"
+  },
+  "devDependencies": {
+    "nodemon": "^1.18.5"
+  }
 }
