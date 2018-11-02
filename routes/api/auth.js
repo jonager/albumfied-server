@@ -9,6 +9,16 @@ const clientSecret = require('../../config/keys').clientSecret;
 // Load user model
 const User = require('../../models/User');
 
+passport.serializeUser((user, done) => {
+    done(null, user.id); // Id from mongodb, not spotify
+});
+
+passport.deserializeUser((id, done) => {
+    User.findById(id).then(user => {
+        done(null, user);
+    });
+});
+
 passport.use(
     new SpotifyStrategy(
         {
@@ -17,8 +27,8 @@ passport.use(
             callbackURL: 'http://localhost:5050/api/auth/callback/'
         },
         function(accessToken, refreshToken, expires_in, profile, done) {
-            User.findOne({ spotifyId: profile.id }).then(user => {
-                if (user) {
+            User.findOne({ spotifyId: profile.id }).then(currentUser => {
+                if (currentUser) {
                     User.findOneAndUpdate(
                         { spotifyId: profile.id },
                         {
@@ -29,7 +39,7 @@ passport.use(
                         },
                         { new: true }
                     )
-                        .then(user => done(null, user))
+                        .then(updatedUser => done(null, updatedUser))
                         .catch(err => console.log(err));
                 } else {
                     const newUser = new User({
@@ -74,20 +84,12 @@ router.get(
 router.get(
     '/callback',
     passport.authenticate('spotify', {
-        failureRedirect: '/login',
-        session: false
+        failureRedirect: '/'
     }),
     function(req, res) {
         // Successful authentication, redirect home.
         res.redirect('/');
     }
 );
-
-router.get('/test', (req, res) => res.json({ msg: 'auth works' }));
-
-// @route GET api/auth
-// @description Get spotify token
-// @access Public
-router.get('/');
 
 module.exports = router;
