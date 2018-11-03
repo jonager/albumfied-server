@@ -2,18 +2,10 @@ const express = require('express');
 const router = express.Router();
 const passport = require('passport');
 
+const authCheck = require('../../utils/helpers').authCheck;
+
 // Load Playlist Model
 const Playlist = require('../../models/Playlist');
-
-// middleware to check auth
-const authCheck = (req, res, next) => {
-    if (!req.user) {
-        // if user is not loggin
-        res.redirect('/');
-    } else {
-        next();
-    }
-};
 
 // @route GET api/playlists
 // @description  Returns all playlists for current user

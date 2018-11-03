@@ -46,6 +46,6 @@ app.use(passport.session());
 app.use('/api/playlists', playlists);
 app.use('/api/auth', auth);
 
-const port = process.env.PORT || 5050;
+const port = process.env.PORT || 5000;
 
 app.listen(port, () => console.log(`Server running on port ${port}`));
