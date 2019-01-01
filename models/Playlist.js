@@ -13,7 +13,7 @@ const PlaylistSchema = new Schema({
     },
     albums: [
         {
-            albumId: {
+            albumSpotifyId: {
                 type: String,
                 required: true
             },
