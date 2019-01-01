@@ -9,9 +9,9 @@ const Playlist = require('../../models/Playlist');
 
 // @route GET api/playlists
 // @description  Returns all playlists for current user
-// @acces Private
+// @access Private
 router.get('/', authCheck, (req, res) => {
-    Playlist.find()
+    Playlist.find({ user: req.user.id })
         .sort({ date: -1 })
         .then(playlists => res.json(playlists))
         .catch(err =>
@@ -21,14 +21,21 @@ router.get('/', authCheck, (req, res) => {
 
 // @route GET api/playlists/:playlist_id
 // @description  Returns playlist by id
-// @acces Private
+// @access Private
 router.get('/:playlist_id', authCheck, (req, res) => {
     Playlist.findById(req.params.playlist_id)
-        .then(playlist => res.json(playlist))
+        .then(playlist => {
+            // Check for playlist owner
+            if (playlist.user.toString() !== req.user.id) {
+                return res
+                    .status(401)
+                    .json({ noauthorized: 'User not authorized' });
+            }
+
+            res.json(playlist);
+        })
         .catch(err =>
-            res
-                .status(404)
-                .json({ noplaylistfound: 'No playlist found with that Id' })
+            res.status(404).json({ noplaylistfound: 'No playlist found' })
         );
 });
 
@@ -36,34 +43,49 @@ router.get('/:playlist_id', authCheck, (req, res) => {
 // @description  Create a new playlist
 // @access Private
 router.post('/', authCheck, (req, res) => {
-    Playlist.findOne({ name: req.body.name }).then(playlist => {
-        if (playlist) {
-            return res.status(400).json({
-                nameTaken: 'A playlist with that name already exists'
-            });
-        } else {
-            const newPlaylist = new Playlist({
-                user: req.user.id,
-                name: req.body.name
-            });
+    Playlist.findOne({ name: req.body.name, user: req.user.id }).then(
+        playlist => {
+            if (playlist) {
+                res.status(400).json({
+                    nameTaken: 'A playlist with that name already exists'
+                });
+                return;
+            } else {
+                const newPlaylist = new Playlist({
+                    user: req.user.id,
+                    name: req.body.name
+                });
 
-            newPlaylist.save().then(playlist => {
-                res.json(playlist);
-            });
+                newPlaylist
+                    .save()
+                    .then(playlist => {
+                        res.json(playlist);
+                    })
+                    .catch(err => console.log(err));
+            }
         }
-    });
+    );
 });
 
-// @route POST api/playlists/album/:id
+// @route POST api/playlists/album
 // @description  Add album to playlist
 // @access Private
-router.post('/album/:playlist_id', authCheck, (req, res) => {
-    Playlist.findById(req.params.playlist_id)
+router.post('/album', authCheck, (req, res) => {
+    Playlist.findById(req.body.playlistId)
         .then(playlist => {
+            // Check for playlist owner
+            if (playlist.user.toString() !== req.user.id) {
+                return res
+                    .status(401)
+                    .json({ noauthorized: 'User not authorized' });
+            }
+
             let albumExists = false;
 
             for (album of playlist.albums) {
-                if (album.albumId === req.body.albumId) {
+                if (
+                    album.albumSpotifyId === req.body.albumToAdd.albumSpotifyId
+                ) {
                     albumExists = true;
                     break;
                 }
@@ -76,15 +98,15 @@ router.post('/album/:playlist_id', authCheck, (req, res) => {
             }
 
             const newAlbum = {
-                albumId: req.body.albumId,
-                albumImgURI: req.body.albumImgURI,
-                albumName: req.body.albumName,
-                artistId: req.body.artistId,
-                artistName: req.body.artistName
+                albumSpotifyId: req.body.albumToAdd.albumSpotifyId,
+                albumImgURI: req.body.albumToAdd.albumImgURI,
+                albumName: req.body.albumToAdd.albumName,
+                artistId: req.body.albumToAdd.artistId,
+                artistName: req.body.albumToAdd.artistName
             };
 
             // Add to comments array
-            playlist.albums.unshift(testAlbum);
+            playlist.albums.unshift(newAlbum);
 
             // Save
             playlist.save().then(playlist => res.json(playlist));
@@ -127,7 +149,7 @@ router.delete('/:playlist_id/:album_id', authCheck, (req, res) => {
             }
             // Get delete index
             const deleteIndex = playlist.albums
-                .map(album => album.id)
+                .map(album => album.albumSpotifyId)
                 .indexOf(req.params.album_id);
 
             if (deleteIndex === -1) {

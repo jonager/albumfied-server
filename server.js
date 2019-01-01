@@ -6,6 +6,7 @@ const cookieSession = require('cookie-session');
 
 const playlists = require('./routes/api/playlists');
 const auth = require('./routes/api/auth');
+const spotify = require('./routes/api/spotify');
 
 const cookieKey = require('./config/keys').cookieKey;
 
@@ -45,6 +46,7 @@ app.use(passport.session());
 // Use Routes
 app.use('/api/playlists', playlists);
 app.use('/api/auth', auth);
+app.use('/api/spotify', spotify);
 
 const port = process.env.PORT || 5000;
 

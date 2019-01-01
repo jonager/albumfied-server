@@ -67,7 +67,8 @@ router.get(
             'user-read-email',
             'streaming',
             'user-read-birthdate',
-            'user-read-private'
+            'user-read-private',
+            'user-read-currently-playing'
         ],
         showDialog: true
     }),
@@ -83,9 +84,11 @@ router.get(
         failureRedirect: '/'
     }),
     function(req, res) {
-        // Successful authentication, redirect to fron-end.
+        // Successful authentication, redirect to front-end.
         res.redirect(
-            `http://localhost:3000/callback?spotifyId=${req.user.spotifyId}`
+            `http://localhost:3000/callback?spotifyId=${
+                req.user.spotifyId
+            }&spotifyToken=${req.user.accessToken}`
         );
     }
 );
