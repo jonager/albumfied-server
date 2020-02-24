@@ -50,6 +50,15 @@ router.get('/search/:search_query', authCheck, (req, res) => {
         }
     })
         .then(response => {
+            if (
+                response.data.albums.items.length === 0 ||
+                response.data.artists.items.length === 0
+            ) {
+                res.status(404).json({
+                    nofound: 'Album/Artist not found'
+                });
+                return;
+            }
             res.json(response.data);
         })
         .catch(error => {
